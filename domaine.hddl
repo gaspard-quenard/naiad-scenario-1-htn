@@ -1,0 +1,468 @@
+; NAIAD, cas d'usage 1 : un T1 guide un troupeau de T3 jusqu'a la zone de depot, balise par balise.
+; Les balises ont deja ete larguees (hors de ce domaine).
+;
+; La hierarchie suit les etapes de mission de Naiad.pptx (slides 17-21) :
+;   mission
+;     1. preparer-la-flotte        lancement, circuit d'attente, rassemblement du troupeau
+;     2. aller-a-la-zone-de-depot  balise apres balise (recherche, recalage), le troupeau suit le T1
+;     3. deposer-les-t3            le troupeau attend ; les T3 atterrissent un par un, guides par le T1
+;     4. verifier-les-positions    le T1 revisite chaque point final ; un T3 mal place se repose
+;     5. terminer-la-mission-t1    retour par les balises et docking, ou oceanisation
+;
+; Chaque action primitive est un objectif de descritpionObjectifsVehicules.xlsx
+;
+; Tout est connu dans l'etat initial. Le probleme ne contient aucun fait
+; de scenario ; chaque ecart est un seul fait :
+;   (balise-hs b)              balise b signalee hors service avant le depart : ignoree
+;   (balise-introuvable b)     balise b introuvable a l'endroit prevu
+;   (recherche-seul b)         le troupeau ne doit pas entrer dans la zone de b : le T1 cherche seul
+;   (atterrissage-rate u)      le premier atterrissage du T3 u sera hors cible
+;   (porteur-indisponible)     pas de recuperation : le T1 s'oceanise
+;
+; Les faits connus avant le depart (balise-hs, recherche-seul, porteur-indisponible)
+; choisissent des methodes. Les faits decouverts pendant la mission (balise-introuvable,
+; atterrissage-rate) ne sont lus que par les actions qui les decouvrent (effets
+; conditionnels) ; la hierarchie branche ensuite sur le resultat observe.
+
+(define (domain naiad_scenario_1)
+  (:requirements :typing :hierarchy :method-preconditions :negative-preconditions :conditional-effects
+                 :universal-preconditions :existential-preconditions)
+  (:types
+    vehicule lieu - object
+    tier1 tier3 - vehicule
+    porteur lieu-attente lieu-depot lieu-oceanisation balise point-final - lieu
+  )
+  (:predicates
+    ; Plan de mission (statique, donne dans le probleme)
+    (itineraire ?depuis ?vers - lieu)              ; itineraire aller, de la zone d'attente a la zone de depot
+    (affecte ?u - tier3 ?f - point-final)          ; point final de chaque T3
+    (premier-atterrissage ?u - tier3)              ; ordre d'atterrissage : le moins d'energie restante d'abord
+    (atterrissage-suivant ?u ?v - tier3)
+    (assez-precis ?recalage - lieu ?d - lieu-depot) ; un recalage en ?recalage est assez precis pour deposer dans ?d
+    ; Faits de scenario (absents du probleme nominal)
+    (balise-hs ?b - balise)
+    (balise-introuvable ?b - balise)
+    (recherche-seul ?b - balise)
+    (atterrissage-rate ?u - tier3)
+    (porteur-indisponible)
+    ; Vehicules
+    (position ?v - vehicule ?l - lieu)             ; au porteur = encore a bord, avant le lancement
+    ; Un T3 du troupeau n'a pas de position propre : il est la ou est le T1 quand le
+    ; troupeau suit le T1, ou la ou le troupeau attend.
+    (dans-troupeau ?u - tier3 ?t - tier1)          ; le T3 ?u est dans le troupeau du T1 ?t
+    (mene-le-troupeau ?t - tier1)                  ; le troupeau suit le T1
+    (troupeau-en-attente ?t - tier1 ?l - lieu)     ; le troupeau tient un circuit d'attente en ?l
+    (troupeau-complet ?t - tier1)                  ; presence de tous les T3 verifiee
+    (recale-sur ?t - tier1 ?l - lieu)              ; le T1 s'est recale en ?l
+    (balise-recherchee ?b - balise)
+    (balise-trouvee ?b - balise)                   ; la recherche a trouve la balise
+    (balise-signalee-absente ?b - balise)
+    (guide-par ?u - tier3 ?t - tier1)
+    (pose ?u - tier3)
+    (bien-place ?u - tier3)
+    (redecollage-ordonne-par ?u - tier3 ?t - tier1)
+    (position-verifiee-par ?u - tier3 ?t - tier1)
+    (docke ?t - tier1)
+    (oceanise ?t - tier1)
+  )
+
+  ; ------------------------------------------------------------------ taches
+
+  (:task mission :parameters (?t - tier1))
+  (:task preparer-la-flotte :parameters (?t - tier1 ?p - porteur ?a - lieu-attente))
+  (:task lancer-les-t3 :parameters (?p - porteur ?a - lieu-attente))
+  (:task aller-a-la-zone-de-depot :parameters (?t - tier1 ?depuis - lieu))
+  (:task utiliser-la-balise :parameters (?t - tier1 ?b - balise))
+  (:task conclure-la-recherche :parameters (?t - tier1 ?b - balise))
+  (:task deposer-les-t3 :parameters (?t - tier1 ?d - lieu-depot))
+  (:task poser-les-t3 :parameters (?t - tier1 ?u - tier3 ?d - lieu-depot))
+  (:task poser-un-t3 :parameters (?t - tier1 ?u - tier3 ?d - lieu-depot))
+  (:task verifier-les-positions :parameters (?t - tier1))
+  (:task verifier-les-t3 :parameters (?t - tier1 ?u - tier3))
+  (:task verifier-un-t3 :parameters (?t - tier1 ?u - tier3))
+  (:task terminer-la-mission-t1 :parameters (?t - tier1 ?d - lieu-depot))
+  (:task retourner-au-porteur :parameters (?t - tier1 ?depuis - lieu))
+
+  ; ------------------------------------------------------------------ les 5 etapes
+
+  (:method m-mission
+    :parameters (?t - tier1 ?p - porteur ?a - lieu-attente ?d - lieu-depot)
+    :task (mission ?t)
+    :precondition (and (position ?t ?p))
+    :ordered-subtasks (and
+      (preparer-la-flotte ?t ?p ?a)
+      (aller-a-la-zone-de-depot ?t ?a)
+      (deposer-les-t3 ?t ?d)
+      (verifier-les-positions ?t)
+      (terminer-la-mission-t1 ?t ?d)))
+
+  ; Etape 1 : lancement, circuit d'attente, rassemblement du troupeau, controle (slide 17)
+
+  (:method m-preparer-la-flotte
+    :parameters (?t - tier1 ?p - porteur ?a - lieu-attente)
+    :task (preparer-la-flotte ?t ?p ?a)
+    :ordered-subtasks (and
+      (se-degager-du-lanceur ?t ?p ?a)
+      (circuit-attente-initial ?t ?a)
+      (lancer-les-t3 ?p ?a)
+      (rassembler-le-troupeau ?t ?a)
+      (controler-integrite-troupeau ?t)))
+
+  ; Lancer les T3 encore au porteur, dans n'importe quel ordre.
+  (:method m-lancer-un-t3
+    :parameters (?u - tier3 ?p - porteur ?a - lieu-attente)
+    :task (lancer-les-t3 ?p ?a)
+    :precondition (and (position ?u ?p))
+    :ordered-subtasks (and
+      (se-degager-du-lanceur ?u ?p ?a)
+      (circuit-attente-initial ?u ?a)
+      (lancer-les-t3 ?p ?a)))
+
+  (:method m-tous-les-t3-lances
+    :parameters (?p - porteur ?a - lieu-attente)
+    :task (lancer-les-t3 ?p ?a)
+    :precondition (and (forall (?u - tier3) (not (position ?u ?p))))
+    :ordered-subtasks (and))
+
+  ; Etape 2 : suivre l'itineraire balise apres balise, puis entrer dans la zone de depot (slide 18)
+
+  (:method m-aller-a-la-balise-suivante
+    :parameters (?t - tier1 ?depuis - lieu ?b - balise)
+    :task (aller-a-la-zone-de-depot ?t ?depuis)
+    :precondition (and (itineraire ?depuis ?b))
+    :ordered-subtasks (and
+      (utiliser-la-balise ?t ?b)
+      (aller-a-la-zone-de-depot ?t ?b)))
+
+  (:method m-entrer-dans-la-zone-de-depot
+    :parameters (?t - tier1 ?depuis - lieu ?d - lieu-depot ?ici - lieu)
+    :task (aller-a-la-zone-de-depot ?t ?depuis)
+    :precondition (and (itineraire ?depuis ?d) (position ?t ?ici))
+    :ordered-subtasks (and
+      (rallier-zone-depot-avec-troupeau ?t ?ici ?d)))
+
+  ; Une balise est recherchee avec le troupeau (aller), seul pendant que le troupeau attend
+  ; (aller, scenario recherche-seul), ou seul (retour). La suite depend
+  ; du resultat de la recherche, pas du scenario.
+
+  (:method m-balise-avec-troupeau
+    :parameters (?t - tier1 ?b - balise ?ici - lieu)
+    :task (utiliser-la-balise ?t ?b)
+    :precondition (and (mene-le-troupeau ?t) (position ?t ?ici) (not (balise-hs ?b)) (not (recherche-seul ?b)))
+    :ordered-subtasks (and
+      (rallier-balise-avec-troupeau ?t ?ici ?b)
+      (rechercher-balise-avec-troupeau ?t ?b)
+      (conclure-la-recherche ?t ?b)))
+
+  (:method m-balise-seul-troupeau-en-attente
+    :parameters (?t - tier1 ?b - balise ?ici - lieu)
+    :task (utiliser-la-balise ?t ?b)
+    :precondition (and (mene-le-troupeau ?t) (position ?t ?ici) (recherche-seul ?b) (not (balise-hs ?b)))
+    :ordered-subtasks (and
+      (troupeau-en-circuit-attente ?t ?ici)
+      (rallier-balise-seul ?t ?ici ?b)
+      (rechercher-balise-seul ?t ?b)
+      (conclure-la-recherche ?t ?b)
+      (rejoindre-le-troupeau ?t ?b ?ici)
+      (troupeau-suit-t1 ?t ?ici)))
+
+  (:method m-balise-seul
+    :parameters (?t - tier1 ?b - balise ?ici - lieu)
+    :task (utiliser-la-balise ?t ?b)
+    :precondition (and (not (mene-le-troupeau ?t)) (position ?t ?ici) (not (balise-hs ?b)))
+    :ordered-subtasks (and
+      (rallier-balise-seul ?t ?ici ?b)
+      (rechercher-balise-seul ?t ?b)
+      (conclure-la-recherche ?t ?b)))
+
+  (:method m-ignorer-balise-hs
+    :parameters (?t - tier1 ?b - balise)
+    :task (utiliser-la-balise ?t ?b)
+    :precondition (and (balise-hs ?b))
+    :ordered-subtasks (and))
+
+  (:method m-balise-trouvee
+    :parameters (?t - tier1 ?b - balise)
+    :task (conclure-la-recherche ?t ?b)
+    :precondition (and (balise-trouvee ?b))
+    :ordered-subtasks (and
+      (se-localiser-sur-balise ?t ?b)))
+
+  (:method m-balise-absente
+    :parameters (?t - tier1 ?b - balise)
+    :task (conclure-la-recherche ?t ?b)
+    :precondition (and (balise-recherchee ?b) (not (balise-trouvee ?b)))
+    :ordered-subtasks (and
+      (signaler-balise-absente ?t ?b)))
+
+  ; Etape 3 : le troupeau attend ; les T3 atterrissent un par un, le moins d'energie d'abord (slide 19)
+
+  (:method m-deposer-les-t3
+    :parameters (?t - tier1 ?d - lieu-depot ?premier - tier3)
+    :task (deposer-les-t3 ?t ?d)
+    :precondition (and (premier-atterrissage ?premier))
+    :ordered-subtasks (and
+      (troupeau-en-circuit-attente ?t ?d)
+      (poser-les-t3 ?t ?premier ?d)))
+
+  (:method m-poser-puis-suivant
+    :parameters (?t - tier1 ?u ?suivant - tier3 ?d - lieu-depot)
+    :task (poser-les-t3 ?t ?u ?d)
+    :precondition (and (atterrissage-suivant ?u ?suivant))
+    :ordered-subtasks (and
+      (poser-un-t3 ?t ?u ?d)
+      (poser-les-t3 ?t ?suivant ?d)))
+
+  (:method m-poser-le-dernier
+    :parameters (?t - tier1 ?u - tier3 ?d - lieu-depot)
+    :task (poser-les-t3 ?t ?u ?d)
+    :precondition (and (forall (?v - tier3) (not (atterrissage-suivant ?u ?v))))
+    :ordered-subtasks (and
+      (poser-un-t3 ?t ?u ?d)))
+
+  (:method m-poser-un-t3
+    :parameters (?t - tier1 ?u - tier3 ?d - lieu-depot ?f - point-final)
+    :task (poser-un-t3 ?t ?u ?d)
+    :precondition (and (affecte ?u ?f))
+    :ordered-subtasks (and
+      (appeler-un-t3 ?t ?u ?d)
+      (guider-t3 ?t ?u ?d)
+      (atterrir-sur-point-final ?u ?t ?d ?f)))
+
+  ; Etape 4 : le T1 controle chaque position finale, dans l'ordre d'atterrissage (slide 20)
+
+  (:method m-verifier-les-positions
+    :parameters (?t - tier1 ?premier - tier3)
+    :task (verifier-les-positions ?t)
+    :precondition (and (premier-atterrissage ?premier))
+    :ordered-subtasks (and
+      (verifier-les-t3 ?t ?premier)))
+
+  (:method m-verifier-puis-suivant
+    :parameters (?t - tier1 ?u ?suivant - tier3)
+    :task (verifier-les-t3 ?t ?u)
+    :precondition (and (atterrissage-suivant ?u ?suivant))
+    :ordered-subtasks (and
+      (verifier-un-t3 ?t ?u)
+      (verifier-les-t3 ?t ?suivant)))
+
+  (:method m-verifier-le-dernier
+    :parameters (?t - tier1 ?u - tier3)
+    :task (verifier-les-t3 ?t ?u)
+    :precondition (and (forall (?v - tier3) (not (atterrissage-suivant ?u ?v))))
+    :ordered-subtasks (and
+      (verifier-un-t3 ?t ?u)))
+
+  (:method m-position-correcte
+    :parameters (?t - tier1 ?u - tier3 ?f - point-final ?ici - lieu)
+    :task (verifier-un-t3 ?t ?u)
+    :precondition (and (affecte ?u ?f) (bien-place ?u) (position ?t ?ici))
+    :ordered-subtasks (and
+      (rallier-point-final ?t ?ici ?f)
+      (confirmer-position-t3 ?t ?u ?f)))
+
+  (:method m-position-incorrecte
+    :parameters (?t - tier1 ?u - tier3 ?f - point-final ?ici - lieu)
+    :task (verifier-un-t3 ?t ?u)
+    :precondition (and (affecte ?u ?f) (pose ?u) (not (bien-place ?u)) (position ?t ?ici))
+    :ordered-subtasks (and
+      (rallier-point-final ?t ?ici ?f)
+      (detecter-mauvais-placement ?t ?u ?f)
+      (redecoller ?u ?t ?f)
+      (guider-t3 ?t ?u ?f)
+      (atterrir-sur-point-final ?u ?t ?f ?f)
+      (confirmer-position-t3 ?t ?u ?f)))
+
+  ; Etape 5 : retour par les balises et docking, ou oceanisation (slide 21)
+
+  (:method m-retour-et-docking
+    :parameters (?t - tier1 ?d - lieu-depot)
+    :task (terminer-la-mission-t1 ?t ?d)
+    :precondition (and (not (porteur-indisponible)))
+    :ordered-subtasks (and
+      (retourner-au-porteur ?t ?d)))
+
+  (:method m-oceanisation
+    :parameters (?t - tier1 ?d - lieu-depot ?o - lieu-oceanisation ?ici - lieu)
+    :task (terminer-la-mission-t1 ?t ?d)
+    :precondition (and (porteur-indisponible) (position ?t ?ici))
+    :ordered-subtasks (and
+      (rallier-zone-oceanisation ?t ?ici ?o)
+      (s-oceaniser-seul ?t ?o)))
+
+  ; L'itineraire est suivi a l'envers : de la zone de depot, balise apres balise,
+  ; jusqu'a la zone d'attente, puis jusqu'au porteur.
+
+  (:method m-retour-par-balise
+    :parameters (?t - tier1 ?depuis - lieu ?b - balise)
+    :task (retourner-au-porteur ?t ?depuis)
+    :precondition (and (itineraire ?b ?depuis))
+    :ordered-subtasks (and
+      (utiliser-la-balise ?t ?b)
+      (retourner-au-porteur ?t ?b)))
+
+  (:method m-docking
+    :parameters (?t - tier1 ?depuis - lieu ?a - lieu-attente ?p - porteur ?ici - lieu)
+    :task (retourner-au-porteur ?t ?depuis)
+    :precondition (and (itineraire ?a ?depuis) (position ?t ?ici))
+    :ordered-subtasks (and
+      (rallier-le-porteur ?t ?ici ?p)
+      (se-docker-sur-le-porteur ?t ?p)))
+
+  ; ------------------------------------------------------------------ actions
+
+  ; T1 #1, T3 #1 : se degager du lanceur
+  (:action se-degager-du-lanceur
+    :parameters (?v - vehicule ?p - porteur ?a - lieu-attente)
+    :precondition (and (position ?v ?p))
+    :effect (and (not (position ?v ?p)) (position ?v ?a)))
+
+  ; T1 #2, T3 #2 : se mettre en circuit d'attente initial (une commande, sans changement d'etat modelise)
+  (:action circuit-attente-initial
+    :parameters (?v - vehicule ?a - lieu-attente)
+    :precondition (and (position ?v ?a))
+    :effect (and))
+
+  ; T1 #3, T3 #3 : le T1 rassemble les T3 de la zone d'attente dans son troupeau ; le troupeau suit le T1
+  (:action rassembler-le-troupeau
+    :parameters (?t - tier1 ?l - lieu)
+    :precondition (and (position ?t ?l) (forall (?u - tier3) (position ?u ?l)))
+    :effect (and (mene-le-troupeau ?t)
+                 (forall (?u - tier3) (and (not (position ?u ?l)) (dans-troupeau ?u ?t)))))
+
+  ; T1 #4 : controler que tous les T3 sont dans le troupeau
+  (:action controler-integrite-troupeau
+    :parameters (?t - tier1)
+    :precondition (and (mene-le-troupeau ?t) (forall (?u - tier3) (dans-troupeau ?u ?t)))
+    :effect (and (troupeau-complet ?t)))
+
+  ; T3 #4 : le troupeau tient un circuit d'attente pendant que le T1 continue seul
+  (:action troupeau-en-circuit-attente
+    :parameters (?t - tier1 ?l - lieu)
+    :precondition (and (mene-le-troupeau ?t) (position ?t ?l))
+    :effect (and (not (mene-le-troupeau ?t)) (troupeau-en-attente ?t ?l)))
+
+  ; T3 #3 : le T1 revenu, le troupeau le suit de nouveau
+  (:action troupeau-suit-t1
+    :parameters (?t - tier1 ?l - lieu)
+    :precondition (and (troupeau-en-attente ?t ?l) (position ?t ?l))
+    :effect (and (not (troupeau-en-attente ?t ?l)) (mene-le-troupeau ?t)))
+
+  ; T1 #5 avec le troupeau : le troupeau suit le T1
+  (:action rallier-balise-avec-troupeau
+    :parameters (?t - tier1 ?depuis - lieu ?b - balise)
+    :precondition (and (position ?t ?depuis) (mene-le-troupeau ?t) (troupeau-complet ?t))
+    :effect (and (not (position ?t ?depuis)) (position ?t ?b)))
+
+  ; T1 #5 seul
+  (:action rallier-balise-seul
+    :parameters (?t - tier1 ?depuis - lieu ?b - balise)
+    :precondition (and (position ?t ?depuis) (not (mene-le-troupeau ?t)))
+    :effect (and (not (position ?t ?depuis)) (position ?t ?b)))
+
+  ; T1 #7 : rechercher la balise avec le troupeau
+  (:action rechercher-balise-avec-troupeau
+    :parameters (?t - tier1 ?b - balise)
+    :precondition (and (position ?t ?b) (mene-le-troupeau ?t))
+    :effect (and (balise-recherchee ?b) (when (not (balise-introuvable ?b)) (balise-trouvee ?b))))
+
+  ; T1 #8 : rechercher la balise seul (troupeau en attente, ou T1 seul au retour)
+  (:action rechercher-balise-seul
+    :parameters (?t - tier1 ?b - balise)
+    :precondition (and (position ?t ?b) (not (mene-le-troupeau ?t)))
+    :effect (and (balise-recherchee ?b) (when (not (balise-introuvable ?b)) (balise-trouvee ?b))))
+
+  ; T1 #9 : se localiser par rapport a la balise (nouveau recalage)
+  (:action se-localiser-sur-balise
+    :parameters (?t - tier1 ?b - balise)
+    :precondition (and (position ?t ?b) (balise-trouvee ?b))
+    :effect (and (recale-sur ?t ?b)))
+
+  ; La recherche a echoue : la balise est signalee absente (pas de nouveau recalage)
+  (:action signaler-balise-absente
+    :parameters (?t - tier1 ?b - balise)
+    :precondition (and (position ?t ?b) (balise-recherchee ?b) (not (balise-trouvee ?b)))
+    :effect (and (balise-signalee-absente ?b)))
+
+  ; Le T1 retourne au troupeau en attente
+  (:action rejoindre-le-troupeau
+    :parameters (?t - tier1 ?depuis ?vers - lieu)
+    :precondition (and (position ?t ?depuis) (troupeau-en-attente ?t ?vers))
+    :effect (and (not (position ?t ?depuis)) (position ?t ?vers)))
+
+  ; T1 #6 : mener le troupeau dans la zone de depot, seulement avec un recalage assez precis
+  (:action rallier-zone-depot-avec-troupeau
+    :parameters (?t - tier1 ?depuis - lieu ?d - lieu-depot)
+    :precondition (and (position ?t ?depuis) (mene-le-troupeau ?t) (troupeau-complet ?t)
+                       (exists (?recalage - lieu) (and (recale-sur ?t ?recalage) (assez-precis ?recalage ?d))))
+    :effect (and (not (position ?t ?depuis)) (position ?t ?d)))
+
+  ; Slide 19 : le T1 appelle le T3 suivant hors du troupeau en attente (les autres continuent d'attendre)
+  (:action appeler-un-t3
+    :parameters (?t - tier1 ?u - tier3 ?l - lieu)
+    :precondition (and (position ?t ?l) (troupeau-en-attente ?t ?l) (dans-troupeau ?u ?t))
+    :effect (and (not (dans-troupeau ?u ?t)) (position ?u ?l)))
+
+  ; Slide 19 : le T1 aide un T3 qui attend pres de lui a se localiser avant d'atterrir
+  (:action guider-t3
+    :parameters (?t - tier1 ?u - tier3 ?l - lieu)
+    :precondition (and (position ?t ?l) (position ?u ?l) (not (pose ?u)) (not (mene-le-troupeau ?t)))
+    :effect (and (guide-par ?u ?t)))
+
+  ; T3 #7 : atterrir sur le point final ; le T3 est bien place sauf si le scenario
+  ; prevoit que cet atterrissage finira hors cible
+  (:action atterrir-sur-point-final
+    :parameters (?u - tier3 ?t - tier1 ?depuis - lieu ?f - point-final)
+    :precondition (and (guide-par ?u ?t) (not (pose ?u)) (position ?u ?depuis) (affecte ?u ?f))
+    :effect (and (not (guide-par ?u ?t)) (not (position ?u ?depuis)) (position ?u ?f) (pose ?u)
+                 (when (not (atterrissage-rate ?u)) (bien-place ?u))
+                 (not (atterrissage-rate ?u))))
+
+  ; T1 #15 : aller a un point final pour controler le T3 qui s'y trouve
+  (:action rallier-point-final
+    :parameters (?t - tier1 ?depuis - lieu ?f - point-final)
+    :precondition (and (position ?t ?depuis))
+    :effect (and (not (position ?t ?depuis)) (position ?t ?f)))
+
+  ; T1 #15 : le T3 est a sa place
+  (:action confirmer-position-t3
+    :parameters (?t - tier1 ?u - tier3 ?f - point-final)
+    :precondition (and (position ?t ?f) (position ?u ?f) (pose ?u) (bien-place ?u))
+    :effect (and (position-verifiee-par ?u ?t)))
+
+  ; T1 #15 : le T3 est hors cible ; le T1 lui ordonne d'atterrir a nouveau
+  (:action detecter-mauvais-placement
+    :parameters (?t - tier1 ?u - tier3 ?f - point-final)
+    :precondition (and (position ?t ?f) (position ?u ?f) (pose ?u) (not (bien-place ?u)))
+    :effect (and (redecollage-ordonne-par ?u ?t)))
+
+  ; T3 #8 : redecoller et attendre le guidage pres du T1
+  (:action redecoller
+    :parameters (?u - tier3 ?t - tier1 ?f - point-final)
+    :precondition (and (position ?u ?f) (pose ?u) (redecollage-ordonne-par ?u ?t))
+    :effect (and (not (pose ?u)) (not (redecollage-ordonne-par ?u ?t))))
+
+  ; T1 #16 : rallier le porteur
+  (:action rallier-le-porteur
+    :parameters (?t - tier1 ?depuis - lieu ?p - porteur)
+    :precondition (and (position ?t ?depuis) (not (porteur-indisponible)))
+    :effect (and (not (position ?t ?depuis)) (position ?t ?p)))
+
+  ; T1 #17 : se docker sur le porteur
+  (:action se-docker-sur-le-porteur
+    :parameters (?t - tier1 ?p - porteur)
+    :precondition (and (position ?t ?p) (forall (?u - tier3) (position-verifiee-par ?u ?t)))
+    :effect (and (docke ?t)))
+
+  ; T1 #13 : rallier la zone d'oceanisation
+  (:action rallier-zone-oceanisation
+    :parameters (?t - tier1 ?depuis - lieu ?o - lieu-oceanisation)
+    :precondition (and (position ?t ?depuis))
+    :effect (and (not (position ?t ?depuis)) (position ?t ?o)))
+
+  ; T1 #13 : s'oceaniser seul
+  (:action s-oceaniser-seul
+    :parameters (?t - tier1 ?o - lieu-oceanisation)
+    :precondition (and (position ?t ?o) (porteur-indisponible) (forall (?u - tier3) (position-verifiee-par ?u ?t)))
+    :effect (and (oceanise ?t)))
+)

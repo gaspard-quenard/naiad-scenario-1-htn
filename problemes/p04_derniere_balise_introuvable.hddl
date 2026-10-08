@@ -1,0 +1,45 @@
+; La balise 3 est introuvable, mais le recalage sur la balise 2 est assez precis pour la zone de depot.
+(define (problem p04_derniere_balise_introuvable)
+  (:domain naiad_scenario_1)
+  (:objects
+    t1 - tier1
+    t3-1 t3-2 t3-3 t3-4 t3-5 - tier3
+    navire - porteur
+    zone-attente - lieu-attente
+    zone-depot - lieu-depot
+    zone-oceanisation - lieu-oceanisation
+    balise-1 balise-2 balise-3 - balise
+    final-1 final-2 final-3 final-4 final-5 - point-final
+  )
+  (:htn :parameters () :ordered-subtasks (and (mission t1)))
+  (:init
+    ; Tous les vehicules sont a bord du porteur ; le T1 se recale par GPS avant la plongee.
+    (position t1 navire) (recale-sur t1 navire)
+    (position t3-1 navire)
+    (position t3-2 navire)
+    (position t3-3 navire)
+    (position t3-4 navire)
+    (position t3-5 navire)
+    ; Itineraire aller, du circuit d'attente a la zone de depot.
+    (itineraire zone-attente balise-1)
+    (itineraire balise-1 balise-2)
+    (itineraire balise-2 balise-3)
+    (itineraire balise-3 zone-depot)
+    ; Recalages assez precis pour deposer dans la zone de depot.
+    (assez-precis balise-3 zone-depot)
+    (assez-precis balise-2 zone-depot)
+    ; Point final de chaque T3, et ordre d'atterrissage (le moins d'energie restante d'abord).
+    (affecte t3-1 final-1)
+    (affecte t3-2 final-2)
+    (affecte t3-3 final-3)
+    (affecte t3-4 final-4)
+    (affecte t3-5 final-5)
+    (premier-atterrissage t3-1)
+    (atterrissage-suivant t3-1 t3-2)
+    (atterrissage-suivant t3-2 t3-3)
+    (atterrissage-suivant t3-3 t3-4)
+    (atterrissage-suivant t3-4 t3-5)
+    ; Scenario : la balise 3 sera introuvable (la balise 2 est aussi assez precise, voir plus haut).
+    (balise-introuvable balise-3)
+  )
+)

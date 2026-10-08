@@ -1,0 +1,274 @@
+Parsing domaine.hddl
+Parsing problemes/p11_mauvaise_journee.hddl
+:'######::'####:'########::'##:::'##:'##::::::::'######:::::'###::::'########: 
+'##... ##:. ##:: ##.... ##:. ##:'##:: ##:::::::'##... ##:::'## ##:::... ##..:: 
+ ##:::..::: ##:: ##:::: ##::. ####::: ##::::::: ##:::..:::'##:. ##::::: ##:::: 
+. ######::: ##:: ########::::. ##:::: ##:::::::. ######::'##:::. ##:::: ##:::: 
+:..... ##:: ##:: ##.... ##:::: ##:::: ##::::::::..... ##: #########:::: ##:::: 
+'##::: ##:: ##:: ##:::: ##:::: ##:::: ##:::::::'##::: ##: ##.... ##:::: ##:::: 
+. ######::'####: ########::::: ##:::: ########:. ######:: ##:::: ##:::: ##:::: 
+:......:::....::........::::::..:::::........:::......:::..:::::..:::::..::::: 
+[39mS i b y l S a t  version rls-cadical
+by Gaspard Quenard <gaspard.quenard@univ-grenoble-alpes.fr> 2023-2024
+based on a fork of the Lilotane planner by Dominik Schreiber <dominik.schreiber@kit.edu>
+using SAT solver cadical
+
+0.008 63 operators and 33 methods created.
+0.008 Grounder command: 'lib/grounder/pandaPIgrounder' --no-literal-pruning --only-write-state-features --quick-compute-state-features --quiet './ProblemProcessing/problem.parsed' './ProblemProcessing/problem.sas'
+0.008 Grounding the parsed problem...
+0.016 Done!
+0.016 Reading ground state features...
+0.016 There are 100 positive state features (which can also be negative) for this problem.
+0.016 There are 133 negative state features for this problem.
+0.016 Done!
+0.016 Found 33 exclusive negative facts.
+0.016 Grounding time: 0.008 s
+0.018 Inferred 70 method preconditions (+132.1%).
+0.018 Iteration 0.
+0.018 Creating the initial root method
+0.018 Collected 0 relevant facts at this expansion iteration
+0.018 Encoding ...
+0.018 Frontier size: 1
+0.018 Iteration 1.
+0.018 New leaf count: 2
+0.018 Instantiating ...
+0.018 Collected 0 relevant facts at this expansion iteration
+0.018 Encoding ...
+0.018 Frontier size: 2
+0.018 Attempting to solve formula with 9 clauses (13 literals) and 1 assumptions
+0.018 Failed to find a primitive solution... Trying to find an abstract plan...
+0.018 Attempting to solve formula with 9 clauses (13 literals) and 0 assumptions
+0.018 Found an abstract plan
+0.018 Number of leaves to develop: 1
+0.018 Iteration 2.
+0.018 New leaf count: 6
+0.018 Instantiating ...
+0.018 Collected 19 relevant facts at this expansion iteration
+0.018 Encoding ...
+0.018 Frontier size: 6
+0.018 Attempting to solve formula with 232 clauses (530 literals) and 5 assumptions
+0.018 Failed to find a primitive solution... Trying to find an abstract plan...
+0.018 Attempting to solve formula with 232 clauses (530 literals) and 0 assumptions
+0.018 Found an abstract plan
+0.018 Number of leaves to develop: 5
+0.018 Iteration 3.
+0.018 New leaf count: 13
+0.018 Instantiating ...
+0.019 Collected 30 relevant facts at this expansion iteration
+0.019 Encoding ...
+0.019 Frontier size: 13
+0.019 Attempting to solve formula with 542 clauses (1250 literals) and 4 assumptions
+0.019 Failed to find a primitive solution... Trying to find an abstract plan...
+0.019 Attempting to solve formula with 542 clauses (1250 literals) and 0 assumptions
+0.019 Found an abstract plan
+0.019 Number of leaves to develop: 5
+0.019 Iteration 4.
+0.019 New leaf count: 18
+0.019 Instantiating ...
+0.019 Collected 38 relevant facts at this expansion iteration
+0.019 Encoding ...
+0.019 Frontier size: 18
+0.019 Attempting to solve formula with 1008 clauses (2429 literals) and 7 assumptions
+0.019 Failed to find a primitive solution... Trying to find an abstract plan...
+0.019 Attempting to solve formula with 1008 clauses (2429 literals) and 0 assumptions
+0.019 Found an abstract plan
+0.019 Number of leaves to develop: 7
+0.019 Iteration 5.
+0.019 New leaf count: 35
+0.019 Instantiating ...
+0.020 Collected 49 relevant facts at this expansion iteration
+0.020 Encoding ...
+0.020 Frontier size: 35
+0.020 Attempting to solve formula with 1780 clauses (4317 literals) and 7 assumptions
+0.020 Failed to find a primitive solution... Trying to find an abstract plan...
+0.020 Attempting to solve formula with 1780 clauses (4317 literals) and 0 assumptions
+0.020 Found an abstract plan
+0.020 Number of leaves to develop: 7
+0.020 Iteration 6.
+0.020 New leaf count: 48
+0.020 Instantiating ...
+0.021 Collected 59 relevant facts at this expansion iteration
+0.021 Encoding ...
+0.021 Frontier size: 48
+0.021 Attempting to solve formula with 2520 clauses (6145 literals) and 5 assumptions
+0.021 Failed to find a primitive solution... Trying to find an abstract plan...
+0.021 Attempting to solve formula with 2520 clauses (6145 literals) and 0 assumptions
+0.021 Found an abstract plan
+0.021 Number of leaves to develop: 5
+0.021 Iteration 7.
+0.021 New leaf count: 59
+0.021 Instantiating ...
+0.022 Collected 65 relevant facts at this expansion iteration
+0.022 Encoding ...
+0.022 Frontier size: 59
+0.022 Attempting to solve formula with 3163 clauses (7703 literals) and 5 assumptions
+0.022 Failed to find a primitive solution... Trying to find an abstract plan...
+0.022 Attempting to solve formula with 3163 clauses (7703 literals) and 0 assumptions
+0.022 Found an abstract plan
+0.022 Number of leaves to develop: 5
+0.022 Iteration 8.
+0.022 New leaf count: 68
+0.022 Instantiating ...
+0.022 Collected 70 relevant facts at this expansion iteration
+0.022 Encoding ...
+0.022 Frontier size: 68
+0.023 Attempting to solve formula with 3807 clauses (9279 literals) and 3 assumptions
+0.023 Failed to find a primitive solution... Trying to find an abstract plan...
+0.023 Attempting to solve formula with 3807 clauses (9279 literals) and 0 assumptions
+0.023 Found an abstract plan
+0.023 Number of leaves to develop: 3
+0.023 Iteration 9.
+0.023 New leaf count: 77
+0.023 Instantiating ...
+0.023 Collected 73 relevant facts at this expansion iteration
+0.023 Encoding ...
+0.023 Frontier size: 77
+0.023 Attempting to solve formula with 4312 clauses (10510 literals) and 1 assumptions
+0.023 Found a solution after 3 expansion iterations.
+0.030 Plan has been verified by pandaPIparser
+==>
+105 se-degager-du-lanceur t1 navire zone-attente
+106 circuit-attente-initial t1 zone-attente
+172 se-degager-du-lanceur t3-2 navire zone-attente
+173 circuit-attente-initial t3-2 zone-attente
+271 se-degager-du-lanceur t3-1 navire zone-attente
+273 circuit-attente-initial t3-1 zone-attente
+443 se-degager-du-lanceur t3-5 navire zone-attente
+446 circuit-attente-initial t3-5 zone-attente
+580 se-degager-du-lanceur t3-4 navire zone-attente
+582 circuit-attente-initial t3-4 zone-attente
+689 se-degager-du-lanceur t3-3 navire zone-attente
+692 circuit-attente-initial t3-3 zone-attente
+116 rassembler-le-troupeau t1 zone-attente
+122 controler-integrite-troupeau t1
+299 troupeau-en-circuit-attente t1 zone-attente
+301 rallier-balise-seul t1 zone-attente balise-2
+313 rechercher-balise-seul t1 balise-2
+321 se-localiser-sur-balise t1 balise-2
+326 rejoindre-le-troupeau t1 balise-2 zone-attente
+330 troupeau-suit-t1 t1 zone-attente
+473 rallier-balise-avec-troupeau t1 zone-attente balise-3
+475 rechercher-balise-avec-troupeau t1 balise-3
+483 se-localiser-sur-balise t1 balise-3
+486 rallier-zone-depot-avec-troupeau t1 balise-3 zone-depot
+138 troupeau-en-circuit-attente t1 zone-depot
+357 appeler-un-t3 t1 t3-1 zone-depot
+358 guider-t3 t1 t3-1 zone-depot
+361 atterrir-sur-point-final t3-1 t1 zone-depot final-1
+489 appeler-un-t3 t1 t3-2 zone-depot
+490 guider-t3 t1 t3-2 zone-depot
+493 atterrir-sur-point-final t3-2 t1 zone-depot final-2
+610 appeler-un-t3 t1 t3-3 zone-depot
+611 guider-t3 t1 t3-3 zone-depot
+614 atterrir-sur-point-final t3-3 t1 zone-depot final-3
+721 appeler-un-t3 t1 t3-4 zone-depot
+722 guider-t3 t1 t3-4 zone-depot
+725 atterrir-sur-point-final t3-4 t1 zone-depot final-4
+814 appeler-un-t3 t1 t3-5 zone-depot
+815 guider-t3 t1 t3-5 zone-depot
+818 atterrir-sur-point-final t3-5 t1 zone-depot final-5
+373 rallier-point-final t1 zone-depot final-1
+380 confirmer-position-t3 t1 t3-1 final-1
+512 rallier-point-final t1 final-1 final-2
+513 detecter-mauvais-placement t1 t3-2 final-2
+523 redecoller t3-2 t1 final-2
+527 guider-t3 t1 t3-2 final-2
+531 atterrir-sur-point-final t3-2 t1 final-2 final-2
+535 confirmer-position-t3 t1 t3-2 final-2
+627 rallier-point-final t1 final-2 final-3
+629 confirmer-position-t3 t1 t3-3 final-3
+733 rallier-point-final t1 final-3 final-4
+734 confirmer-position-t3 t1 t3-4 final-4
+822 rallier-point-final t1 final-4 final-5
+824 confirmer-position-t3 t1 t3-5 final-5
+150 rallier-zone-oceanisation t1 final-5 zone-oceanisation
+151 s-oceaniser-seul t1 zone-oceanisation
+root 3
+3 mission t1 -> m-mission 25 27 33 47 52
+25 preparer-la-flotte t1 navire zone-attente -> m-preparer-la-flotte 105 106 109 116 122
+27 aller-a-la-zone-de-depot t1 zone-attente -> m-aller-a-la-balise-suivante 134 136
+33 deposer-les-t3 t1 zone-depot -> m-deposer-les-t3 138 140
+47 verifier-les-positions t1 -> m-verifier-les-positions 144
+52 terminer-la-mission-t1 t1 zone-depot -> m-oceanisation 150 151
+109 lancer-les-t3 navire zone-attente -> m-lancer-un-t3 172 173 187
+134 utiliser-la-balise t1 balise-1 -> m-ignorer-balise-hs
+136 aller-a-la-zone-de-depot t1 balise-1 -> m-aller-a-la-balise-suivante 203 208
+140 poser-les-t3 t1 t3-1 zone-depot -> m-poser-puis-suivant 214 216
+144 verifier-les-t3 t1 t3-1 -> m-verifier-puis-suivant 223 240
+187 lancer-les-t3 navire zone-attente -> m-lancer-un-t3 271 273 289
+203 utiliser-la-balise t1 balise-2 -> m-balise-seul-troupeau-en-attente 299 301 313 849 326 330
+208 aller-a-la-zone-de-depot t1 balise-2 -> m-aller-a-la-balise-suivante 337 346
+214 poser-un-t3 t1 t3-1 zone-depot -> m-poser-un-t3 357 358 361
+216 poser-les-t3 t1 t3-2 zone-depot -> m-poser-puis-suivant 363 367
+223 verifier-un-t3 t1 t3-1 -> m-position-correcte 373 380
+240 verifier-les-t3 t1 t3-2 -> m-verifier-puis-suivant 406 415
+289 lancer-les-t3 navire zone-attente -> m-lancer-un-t3 443 446 462
+337 utiliser-la-balise t1 balise-3 -> m-balise-avec-troupeau 473 475 851
+346 aller-a-la-zone-de-depot t1 balise-3 -> m-entrer-dans-la-zone-de-depot 486
+363 poser-un-t3 t1 t3-2 zone-depot -> m-poser-un-t3 489 490 493
+367 poser-les-t3 t1 t3-3 zone-depot -> m-poser-puis-suivant 495 500
+406 verifier-un-t3 t1 t3-2 -> m-position-incorrecte 512 513 523 527 531 535
+415 verifier-les-t3 t1 t3-3 -> m-verifier-puis-suivant 542 553
+462 lancer-les-t3 navire zone-attente -> m-lancer-un-t3 580 582 597
+495 poser-un-t3 t1 t3-3 zone-depot -> m-poser-un-t3 610 611 614
+500 poser-les-t3 t1 t3-4 zone-depot -> m-poser-puis-suivant 616 620
+542 verifier-un-t3 t1 t3-3 -> m-position-correcte 627 629
+553 verifier-les-t3 t1 t3-4 -> m-verifier-puis-suivant 657 668
+597 lancer-les-t3 navire zone-attente -> m-lancer-un-t3 689 692 707
+616 poser-un-t3 t1 t3-4 zone-depot -> m-poser-un-t3 721 722 725
+620 poser-les-t3 t1 t3-5 zone-depot -> m-poser-le-dernier 727
+657 verifier-un-t3 t1 t3-4 -> m-position-correcte 733 734
+668 verifier-les-t3 t1 t3-5 -> m-verifier-le-dernier 764
+707 lancer-les-t3 navire zone-attente -> m-tous-les-t3-lances
+727 poser-un-t3 t1 t3-5 zone-depot -> m-poser-un-t3 814 815 818
+764 verifier-un-t3 t1 t3-5 -> m-position-correcte 822 824
+849 conclure-la-recherche t1 balise-2 -> m-balise-trouvee 321
+851 conclure-la-recherche t1 balise-3 -> m-balise-trouvee 483
+<==
+0.030 End of solution plan. (counted length of 56)
+0.030 # expansion iterations: 10
+0.030 # instantiated positions: 116
+0.030 # instantiated actions: 132
+0.030 # instantiated reductions: 53
+0.030 # introduced pseudo-constants: 16
+0.030 # retroactive prunings: 0
+0.030 # retroactively pruned operations: 0
+0.030 # dominated operations: 0
+0.030 End after result 0
+0.030 Total amount of clauses encoded: 4312
+0.030 - direct frame axioms : 1742 cls
+0.030 - reduction constraints : 671 cls
+0.030 - Q-constant equality : 315 cls
+0.030 - Q-fact semantics : 298 cls
+0.030 - action constraints : 258 cls
+0.030 - indirect frame axioms : 235 cls
+0.030 - action effects : 193 cls
+0.030 - predecessor constraints : 184 cls
+0.030 - expansion constraints : 181 cls
+0.030 - at-most-one constraints : 81 cls
+0.030 - at-least-one constraints : 59 cls
+0.030 - substitution constraints : 1 cls
+0.030 - unclassified clauses : 94 cls
+0.030 * time grounding : 7 ms
+0.030 * time expansion : 2 ms
+0.030 * time encoding : 2 ms
+0.030 * time solver : 0 ms
+0.030 * time total : 29 ms
+0.030 Exiting happily (no cleaning up).
+pandaPIparser is configured as follows
+  Colors in output: true
+  Mode: parsing mode
+  Parameter splitting: true
+  Conditional effects: exponential encoding
+  Disjunctive preconditions as HTN: false
+  Replace goal with action: false
+  Output: pandaPI format
+pandaPIparser is configured as follows
+  Colors in output: true
+  Mode: convert pandaPI plan
+pandaPIparser is configured as follows
+  Colors in output: false
+  Mode: plan verification
+  Verbosity: 0
+  Lenient mode: false
+  Ignore given order: false
